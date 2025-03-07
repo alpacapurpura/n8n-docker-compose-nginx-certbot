@@ -1,0 +1,87 @@
+# Configuración y credenciales
+.env
+*.env
+.env.*
+!.env.example
+
+# Directorios de datos de n8n
+n8n/logs/
+n8n/backup/
+shared/
+data/
+
+# Volúmenes de Docker
+volumes/
+*.volume
+
+# Archivos de Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Archivos temporales
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Archivos de logs
+*.log
+logs/
+
+# Archivos específicos del sistema operativo
+.DS_Store
+Thumbs.db
+.directory
+desktop.ini
+
+# Archivos de certificados SSL (si se generan localmente)
+*.key
+*.crt
+*.pem
+*.csr
+*.srl
+
+# Archivos de respaldo
+*.bak
+*.swp
+*~
+
+# Archivos de IDE y editores
+.idea/
+.vscode/
+*.sublime-*
+*.code-workspace
+
+# Archivos personalizados
+secrets/
+private/
+
+# Archivos de configuración local
+.local/
+local/
+
+# Archivos específicos de Docker
+.docker/
+docker-volumes/
+
+# Migraciones de base de datos o archivos de exportación
+*.dump
+*.sql
+*.sqlite
+*.db
+
+# Archivos de historial de comandos
+.bash_history
+.zsh_history
+
+# Archivos específicos de CI/CD
+.github/workflows/*.local.yml
+.gitlab-ci.local.yml
+
+# Archivos binarios y compilados
+*.exe
+*.dll
+*.so
+*.dylib 
