@@ -59,24 +59,13 @@ if ! command -v docker &> /dev/null; then
   fi
 fi
 
-# Verificar si Docker Compose está instalado
-if ! command -v docker-compose &> /dev/null; then
-  print_error "Docker Compose no está instalado. ¿Deseas instalarlo ahora? (s/n)"
-  read -r respuesta
-  if [[ "$respuesta" =~ ^[Ss]$ ]]; then
-    print_message "Instalando Docker Compose..."
-    
-    # Instalar Docker Compose
-    curl -SL https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
-    
-    # Verificar instalación
-    docker-compose --version
-    print_success "Docker Compose instalado correctamente."
-  else
-    print_error "Docker Compose es necesario para continuar. Instalalo e intenta nuevamente."
-    exit 1
-  fi
+# Verificar Docker Compose
+print_message "Verificando Docker Compose..."
+if docker compose version &> /dev/null; then
+  print_success "Docker Compose está disponible."
+else
+  print_error "Docker Compose no está disponible. Asegúrate de tener instalado Docker con compose plugin."
+  exit 1
 fi
 
 print_success "Prerrequisitos verificados correctamente."
@@ -143,43 +132,43 @@ fi
 
 # Iniciar los servicios con Docker Compose usando el perfil CPU
 print_message "Iniciando servicios con Docker Compose (perfil CPU)..."
-docker-compose --profile cpu down
-docker-compose --profile cpu up -d
+docker compose --profile cpu down
+docker compose --profile cpu up -d
 
 # Verificar si los servicios están en funcionamiento
 print_message "Verificando estado de los servicios..."
 sleep 10
 
-if docker-compose ps | grep -q "n8n"; then
+if docker compose ps | grep -q "n8n"; then
   print_success "Servicio n8n iniciado correctamente."
 else
   print_error "Error al iniciar el servicio n8n. Verificando logs..."
-  docker-compose logs n8n
+  docker compose logs n8n
 fi
 
-if docker-compose ps | grep -q "nginx-proxy"; then
+if docker compose ps | grep -q "nginx-proxy"; then
   print_success "Servicio nginx-proxy iniciado correctamente."
 else
   print_error "Error al iniciar el servicio nginx-proxy. Verificando logs..."
-  docker-compose logs nginx-proxy
+  docker compose logs nginx-proxy
 fi
 
-if docker-compose ps | grep -q "certbot"; then
+if docker compose ps | grep -q "certbot"; then
   print_success "Servicio certbot iniciado correctamente."
 else
   print_error "Error al iniciar el servicio certbot. Verificando logs..."
-  docker-compose logs certbot
+  docker compose logs certbot
 fi
 
 # Mostrar información de acceso
 DOMAIN=$(grep VIRTUAL_HOST .env | cut -d= -f2)
 print_message "Configuración completada. Puedes acceder a n8n en https://$DOMAIN"
 print_message "Puede tardar unos minutos hasta que el certificado SSL sea emitido por Let's Encrypt."
-print_message "Si tienes problemas, puedes verificar los logs con: docker-compose logs -f"
+print_message "Si tienes problemas, puedes verificar los logs con: docker compose logs -f"
 
 # Mostrar instrucciones para monitorear los logs
 print_message "Para monitorear los logs de n8n:"
-print_message "  - Logs en tiempo real: docker-compose logs -f n8n"
+print_message "  - Logs en tiempo real: docker compose logs -f n8n"
 print_message "  - Archivos de log: ls -la n8n/logs/"
 
 exit 0 

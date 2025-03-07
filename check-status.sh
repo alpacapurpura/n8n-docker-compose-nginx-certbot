@@ -53,36 +53,36 @@ fi
 
 # Verificar estado de los contenedores
 print_title "ESTADO DE LOS CONTENEDORES"
-docker-compose ps
+docker compose ps
 
 # Verificar si n8n está en ejecución
 print_title "VERIFICANDO N8N"
-if docker-compose ps | grep -q "n8n.*Up"; then
+if docker compose ps | grep -q "n8n.*Up"; then
   print_success "El servicio n8n está en ejecución."
 else
   print_error "El servicio n8n no está en ejecución."
   print_message "Verificando los logs de n8n..."
-  docker-compose logs --tail=50 n8n
+  docker compose logs --tail=50 n8n
 fi
 
 # Verificar si Nginx está en ejecución
 print_title "VERIFICANDO NGINX"
-if docker-compose ps | grep -q "nginx-proxy.*Up"; then
+if docker compose ps | grep -q "nginx-proxy.*Up"; then
   print_success "El servicio nginx-proxy está en ejecución."
 else
   print_error "El servicio nginx-proxy no está en ejecución."
   print_message "Verificando los logs de nginx-proxy..."
-  docker-compose logs --tail=50 nginx-proxy
+  docker compose logs --tail=50 nginx-proxy
 fi
 
 # Verificar certificados SSL
 print_title "VERIFICANDO CERTIFICADOS SSL"
-if docker-compose ps | grep -q "certbot.*Up"; then
+if docker compose ps | grep -q "certbot.*Up"; then
   print_success "El servicio certbot está en ejecución."
 else
   print_error "El servicio certbot no está en ejecución."
   print_message "Verificando los logs de certbot..."
-  docker-compose logs --tail=50 certbot
+  docker compose logs --tail=50 certbot
 fi
 
 # Verificar archivos de certificados
@@ -91,10 +91,10 @@ if [ -z "$DOMAIN" ]; then
   print_error "No se pudo obtener el dominio del archivo .env"
 else
   print_message "Verificando certificados para dominio: $DOMAIN"
-  if docker-compose exec nginx-proxy ls -la /etc/nginx/certs/$DOMAIN.crt 2>/dev/null; then
+  if docker compose exec nginx-proxy ls -la /etc/nginx/certs/$DOMAIN.crt 2>/dev/null; then
     print_success "Certificado SSL encontrado para $DOMAIN"
     # Verificar fecha de vencimiento del certificado
-    EXPIRY=$(docker-compose exec nginx-proxy openssl x509 -in /etc/nginx/certs/$DOMAIN.crt -noout -enddate 2>/dev/null | cut -d= -f2)
+    EXPIRY=$(docker compose exec nginx-proxy openssl x509 -in /etc/nginx/certs/$DOMAIN.crt -noout -enddate 2>/dev/null | cut -d= -f2)
     if [ -n "$EXPIRY" ]; then
       print_message "El certificado vence: $EXPIRY"
     fi
@@ -102,7 +102,7 @@ else
     print_error "No se encontró certificado SSL para $DOMAIN"
     print_message "Puede tardar unos minutos en generarse el certificado SSL."
     print_message "Verificando si hay solicitudes pendientes..."
-    docker-compose logs --tail=20 certbot
+    docker compose logs --tail=20 certbot
   fi
 fi
 
@@ -176,10 +176,10 @@ date
 # Mostrar instrucciones adicionales
 print_title "INSTRUCCIONES ADICIONALES"
 echo "Para reiniciar todos los servicios:"
-echo "sudo docker-compose --profile cpu down && sudo docker-compose --profile cpu up -d"
+echo "sudo docker compose --profile cpu down && sudo docker compose --profile cpu up -d"
 echo ""
 echo "Para ver logs en tiempo real:"
-echo "sudo docker-compose logs -f"
+echo "sudo docker compose logs -f"
 echo ""
 echo "Para acceder a la interfaz de n8n:"
 echo "https://$DOMAIN"
