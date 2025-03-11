@@ -14,8 +14,41 @@ Este proyecto configura una instalación completa de n8n con Nginx como proxy in
 ## Prerrequisitos
 
 - Una máquina virtual con Debian en Google Cloud
+- Docker instalado (versión 20.10.0 o superior) con plugin de Compose
 - Un nombre de dominio apuntando a la IP de tu servidor (en este caso, n8n-dev.alpacapurpura.lat)
 - Puertos 80 y 443 abiertos en el firewall de Google Cloud
+
+### Verificación de Docker y su plugin de Compose
+
+Para verificar que Docker y el plugin de Compose están instalados correctamente:
+
+```bash
+# Verificar versión de Docker
+docker --version
+
+# Verificar que el plugin de Compose está disponible
+docker compose version
+```
+
+Si no tienes Docker con el plugin de Compose, puedes instalarlo con:
+
+```bash
+# Instalar paquetes necesarios
+sudo apt update
+sudo apt install -y apt-transport-https ca-certificates curl software-properties-common gnupg
+
+# Añadir clave GPG oficial de Docker
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Configurar repositorio
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Actualizar e instalar Docker con el plugin de Compose
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
 
 ## Estructura de directorios
 
@@ -80,6 +113,12 @@ Este proyecto configura una instalación completa de n8n con Nginx como proxy in
    sudo apt install -y git curl wget nano
    ```
 
+4. Asegúrate de que Docker y el plugin de Compose estén instalados:
+   ```bash
+   docker --version
+   docker compose version
+   ```
+
 ### 4. Clonar el repositorio
 
 1. Clona este repositorio:
@@ -121,8 +160,7 @@ Este proyecto configura una instalación completa de n8n con Nginx como proxy in
    ```
 
 3. El script realizará las siguientes acciones:
-   - Verificará si Docker y Docker Compose están instalados
-   - Los instalará si es necesario
+   - Verificará si Docker está instalado
    - Creará la estructura de directorios
    - Configurará los permisos
    - Verificará que los puertos 80 y 443 estén disponibles
@@ -149,7 +187,7 @@ Este proyecto configura una instalación completa de n8n con Nginx como proxy in
 
 3. También puedes verificar los contenedores manualmente:
    ```bash
-   docker-compose ps
+   docker compose ps
    ```
 
 4. Accede a n8n a través de tu dominio:
@@ -160,6 +198,43 @@ Este proyecto configura una instalación completa de n8n con Nginx como proxy in
 5. Nota: La emisión del certificado SSL puede tardar unos minutos. Puedes verificar el estado con:
    ```bash
    sudo ./check-status.sh
+   ```
+
+## Solución de problemas comunes con Docker Compose
+
+### Error: "docker compose" comando no encontrado
+
+Si el comando `docker compose` no está disponible, verifica:
+
+1. La versión de Docker que estás usando (debe ser 20.10.0 o superior):
+   ```bash
+   docker --version
+   ```
+
+2. Si tienes el plugin de Compose instalado:
+   ```bash
+   docker-compose --version # Versión antigua
+   docker compose version   # Nueva versión del plugin
+   ```
+
+3. Si necesitas instalar el plugin:
+   ```bash
+   sudo apt update
+   sudo apt install -y docker-compose-plugin
+   ```
+
+### Error: "The Compose file './docker-compose.yml' is invalid"
+
+Este error puede ocurrir cuando hay un problema con la sintaxis del archivo docker-compose.yml o cuando la versión de Docker Compose no es compatible. Soluciones:
+
+1. Verifica que estás usando una versión actualizada de Docker Compose:
+   ```bash
+   docker compose version
+   ```
+
+2. Si el problema persiste, puedes validar tu archivo docker-compose.yml:
+   ```bash
+   docker compose config
    ```
 
 ## Seguridad y buenas prácticas
@@ -189,13 +264,13 @@ Los registros de n8n se almacenan en el directorio `n8n/logs` y se pueden consul
 
 ```bash
 # Ver todos los logs de Docker
-docker-compose logs -f
+docker compose logs -f
 
 # Ver solo logs de n8n
-docker-compose logs -f n8n
+docker compose logs -f n8n
 
 # Ver logs de certbot (útil para problemas con SSL)
-docker-compose logs -f certbot
+docker compose logs -f certbot
 
 # Ver logs desde archivos
 ls -la n8n/logs/
@@ -236,11 +311,11 @@ Si necesitas reiniciar los servicios:
 
 ```bash
 # Reiniciar todos los servicios
-docker-compose --profile cpu down
-docker-compose --profile cpu up -d
+docker compose --profile cpu down
+docker compose --profile cpu up -d
 
 # Reiniciar solo n8n
-docker-compose restart n8n
+docker compose restart n8n
 ```
 
 ### Monitoreo del sistema
@@ -264,18 +339,18 @@ Este comando te dará un informe completo del estado de todos los componentes, c
 - Asegúrate de que los puertos 80 y 443 estén abiertos en el firewall de Google Cloud.
 - Verifica los logs de Certbot: 
   ```bash
-  docker-compose logs certbot
+  docker compose logs certbot
   ```
 - Intenta reiniciar el servicio de Certbot:
   ```bash
-  docker-compose restart certbot
+  docker compose restart certbot
   ```
 
 ### n8n no se inicia
 
 - Revisa los logs: 
   ```bash
-  docker-compose logs n8n
+  docker compose logs n8n
   ```
 - Verifica la configuración en el archivo `.env`
 - Asegúrate de que todos los directorios tengan los permisos correctos:
@@ -300,12 +375,12 @@ Para actualizar a una nueva versión de n8n:
 
 1. Haz una copia de seguridad:
    ```bash
-   docker-compose exec n8n n8n export:workflow --all --output=/backup/workflows-$(date +%Y%m%d).json
+   docker compose exec n8n n8n export:workflow --all --output=/backup/workflows-$(date +%Y%m%d).json
    ```
 
 2. Detén los servicios:
    ```bash
-   docker-compose --profile cpu down
+   docker compose --profile cpu down
    ```
 
 3. Actualiza el código del repositorio:
@@ -315,7 +390,7 @@ Para actualizar a una nueva versión de n8n:
 
 4. Inicia de nuevo:
    ```bash
-   docker-compose --profile cpu up -d
+   docker compose --profile cpu up -d
    ```
 
 ## Referencias
