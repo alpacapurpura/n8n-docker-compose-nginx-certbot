@@ -30,24 +30,9 @@ docker --version
 docker compose version
 ```
 
-Si no tienes Docker con el plugin de Compose, puedes instalarlo con:
+Si no tienes Docker con el plugin de Compose, puedes instalarlo en
+https://docs.docker.com/compose/install/linux/
 
-```bash
-# Instalar paquetes necesarios
-sudo apt update
-sudo apt install -y apt-transport-https ca-certificates curl software-properties-common gnupg
-
-# Añadir clave GPG oficial de Docker
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-# Configurar repositorio
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# Actualizar e instalar Docker con el plugin de Compose
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
 ## Estructura de directorios
@@ -92,7 +77,7 @@ sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin d
 1. Configura un registro A en tu proveedor de DNS para que `n8n-dev.alpacapurpura.lat` apunte a la IP externa de tu VM.
 2. Verifica que el DNS se haya propagado:
    ```bash
-   nslookup n8n-dev.alpacapurpura.lat
+   nslookup tu-dominio.com
    ```
 
 ### 3. Preparación del servidor
@@ -192,7 +177,7 @@ sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin d
 
 4. Accede a n8n a través de tu dominio:
    ```
-   https://n8n-dev.alpacapurpura.lat
+   https://tu-dominio.com
    ```
 
 5. Nota: La emisión del certificado SSL puede tardar unos minutos. Puedes verificar el estado con:
@@ -400,3 +385,48 @@ Para actualizar a una nueva versión de n8n:
 - [Configuración de logs en n8n](https://docs.n8n.io/hosting/configuration/environment-variables/logs/)
 - [Documentación de Docker Compose](https://docs.docker.com/compose/)
 - [Documentación de Google Cloud Compute Engine](https://cloud.google.com/compute/docs)
+
+## Para casos extremos: Forzar cierre y eliminación de contenedores e imágenes (Del compose)
+1. Ubicarte en la carpeta donde se encuentra el archivo `docker-compose.yml`
+2. Ejecutar el siguiente comando:
+```bash
+# Detener todos los contenedores
+docker-compose down --rmi all --remove-orphans && \
+docker network prune --force && \
+docker image prune --all --force
+
+# Reiniciar el servicio Docker (solo si persisten errores)
+sudo systemctl restart docker
+```
+
+## Para casos extremos: Forzar cierre y eliminación de contenedores e imágenes (Afecta a todo el servidor)
+1. Ubicarte en la carpeta donde se encuentra el archivo `docker-compose.yml`
+2. Ejecutar el siguiente comando:
+```bash
+# Detener todos los contenedores
+docker stop $(docker ps -aq)
+
+# Eliminar contenedores persistentes (si el anterior falla)
+docker rm -f $(docker ps -aq) 2>/dev/null || true
+
+# Quitar todas las redes no usadas
+docker network prune -f
+
+# Eliminar todas las imágenes
+docker rmi -f $(docker images -q) 2>/dev/null || true
+
+# Reiniciar el servicio Docker (solo si persisten errores)
+sudo systemctl restart docker
+```
+
+3. Verificar que no queden contenedores o imágenes
+docker ps -a      # No debe mostrar contenedores
+docker images     # Solo imágenes base del sistema
+docker network ls # Solo redes por defecto
+
+4. Reinstalar tu stack
+
+## Versión nuclear para casos demasiado extremos y no recomendado: Eliminar volúmenes (Se eliminará toda la información avanzada en el servidor, por eso, trata de generar backups de manera recurrente)
+NO USAR SI YA HAY DATA:
+docker-compose down --rmi all --remove-orphans --volumes && \
+docker system prune --all --force --volumes

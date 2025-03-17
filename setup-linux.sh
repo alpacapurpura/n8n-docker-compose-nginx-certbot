@@ -68,6 +68,29 @@ else
   exit 1
 fi
 
+# Add after Docker Compose verification
+print_message "Verificando dependencias del sistema..."
+# Check and install dnsutils
+if ! dpkg -l | grep -q dnsutils; then
+    print_message "Instalando dnsutils para herramientas DNS..."
+    apt-get update
+    apt-get install -y dnsutils
+    print_success "dnsutils instalado correctamente"
+else
+    print_success "dnsutils ya está instalado"
+fi
+
+# Check and install ufw
+if ! dpkg -l | grep -q ufw; then
+    print_message "Instalando ufw para gestión del firewall..."
+    apt-get install -y ufw
+    print_success "ufw instalado correctamente"
+else
+    print_success "ufw ya está instalado"
+fi
+
+print_success "Dependencias del sistema verificadas"
+
 print_success "Prerrequisitos verificados correctamente."
 
 # Crear directorios necesarios
