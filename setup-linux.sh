@@ -171,4 +171,48 @@ print_message "Para monitorear los logs de n8n:"
 print_message "  - Logs en tiempo real: docker compose logs -f n8n"
 print_message "  - Archivos de log: ls -la n8n/logs/"
 
-exit 0 
+# Add after directory creation
+print_message "Verifying Docker Compose persistence configuration..."
+if ! command -v jq &> /dev/null; then
+  apt-get install -y jq
+fi
+
+if docker compose config --format json | jq -e '.volumes.n8n_storage' >/dev/null 2>&1; then
+  print_success "n8n data volume configured in Docker Compose"
+else
+  print_error "Missing n8n_storage volume in docker-compose.yml"
+  exit 1
+fi
+
+# Modify permissions section to:
+print_message "Configuring secure permissions..."
+find n8n/logs -type d -exec chmod 755 {} \;
+find n8n/logs -type f -exec chmod 644 {} \;
+chown -R 1000:1000 n8n/backup shared
+
+# Add after certbot service verification
+print_message "Configurando renovación automática de certificados..."
+# Create renewal script with VM-compatible paths
+RENEW_SCRIPT="/etc/cron.daily/n8n-certbot-renew"
+echo '#!/bin/sh
+cd "$(dirname "$0")/.."  # Navigate to project root from script location
+docker compose exec certbot certbot renew --quiet
+docker compose exec nginx-proxy nginx -s reload
+' | sudo tee "$RENEW_SCRIPT" > /dev/null
+
+# Set permissions
+sudo chmod +x "$RENEW_SCRIPT"
+print_success "Script de renovación instalado en $RENEW_SCRIPT"
+
+# Verify certbot configuration
+print_message "Verificando configuración de Certbot (dry-run)..."
+docker compose exec certbot certbot renew --dry-run
+if [ $? -eq 0 ]; then
+  print_success "La configuración de renovación automática es válida"
+else
+  print_error "Error en la configuración de Certbot. Verifica los logs:"
+  docker compose logs certbot
+  exit 1
+fi
+
+exit 0
