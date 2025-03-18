@@ -62,6 +62,8 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
     environment:
       - DEFAULT_HOST=${VIRTUAL_HOST}
+      - TRUST_DOWNSTREAM_PROXY=false  # Add this security setting
+      - VIRTUAL_PORT=5678  # Explicit port declaration
 
   certbot:
     image: jrcs/letsencrypt-nginx-proxy-companion
@@ -103,6 +105,8 @@ services:
     <<: *service-n8n
     hostname: n8n
     container_name: n8n
+    expose:
+      - 5678
     restart: unless-stopped
     volumes:
       - n8n_storage:/home/node/.n8n
