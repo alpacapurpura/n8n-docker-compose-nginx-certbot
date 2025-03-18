@@ -27,7 +27,7 @@ print_error() {
 print_message "Verificando prerrequisitos..."
 
 # Verificar si Docker está instalado
-if ! command -v docker &> /dev/null; then
+if command -v docker &> /dev/null; then
   print_success "Docker está disponible."
 else
   print_error "Docker no está instalado. Docker es necesario para continuar. Instalalo e intenta nuevamente."

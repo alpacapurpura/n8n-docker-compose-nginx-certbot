@@ -8,7 +8,6 @@ Este proyecto configura una instalación completa de n8n con Nginx como proxy in
 - **Nginx**: Servidor web que actúa como proxy inverso
 - **Certbot**: Herramienta para obtener certificados SSL automáticamente de Let's Encrypt
 - **PostgreSQL**: Base de datos para n8n
-- **Ollama**: Motor de IA para n8n (parte del AI Starter Kit)
 - **Qdrant**: Vector database para n8n (parte del AI Starter Kit)
 
 ## Prerrequisitos
@@ -56,37 +55,16 @@ https://docs.docker.com/compose/install/linux/
 ### 1. Configuración de la máquina virtual
 
 1. Accede a la consola de Google Cloud y crea una instancia de VM con Debian.
-2. Asegúrate de que la VM tenga al menos 2GB de RAM y 2 CPUs.
-3. Abre los puertos 80 y 443 en el firewall de Google Cloud:
-   ```bash
-   # Desde la consola de Google Cloud o con gcloud
-   gcloud compute firewall-rules create allow-http \
-     --allow tcp:80 \
-     --target-tags=http-server \
-     --description="Allow HTTP traffic"
-   
-   gcloud compute firewall-rules create allow-https \
-     --allow tcp:443 \
-     --target-tags=https-server \
-     --description="Allow HTTPS traffic"
-   ```
-4. Asigna estos tags a tu VM si usaste el comando anterior.
+2. Asegúrate de que la VM tenga al menos 1GB de RAM y 2 vCPUs.
 
 ### 2. Configuración del dominio
 
-1. Configura un registro A en tu proveedor de DNS para que `n8n-dev.alpacapurpura.lat` apunte a la IP externa de tu VM.
-2. Verifica que el DNS se haya propagado:
-   ```bash
-   nslookup tu-dominio.com
-   ```
+1. Configura un registro A en tu proveedor de DNS para que `tu-dominio.com` apunte a la IP externa de tu VM.
+
 
 ### 3. Preparación del servidor
 
 1. Conéctate a tu VM mediante SSH:
-   ```bash
-   ssh tu_usuario@IP_DE_TU_VM
-   ```
-
 2. Actualiza el sistema:
    ```bash
    sudo apt update
@@ -124,9 +102,9 @@ https://docs.docker.com/compose/install/linux/
    - `POSTGRES_PASSWORD`: Una contraseña segura para PostgreSQL
    - `N8N_ENCRYPTION_KEY`: Una clave de encriptación larga y segura (mínimo 32 caracteres)
    - `N8N_USER_MANAGEMENT_JWT_SECRET`: Un secreto JWT largo y seguro (mínimo 32 caracteres)
-   - `VIRTUAL_HOST`: Tu dominio (tudominio.com)
-   - `N8N_HOST`: URL completa (https://tudominio.com)
-   - `WEBHOOK_URL`: URL completa (https://tudominio.com/)
+   - `VIRTUAL_HOST`: Tu dominio (tu-dominio.com)
+   - `N8N_HOST`: URL completa (https://tu-dominio.com)
+   - `WEBHOOK_URL`: URL completa (https://tu-dominio.com/)
    - `CERTBOT_EMAIL`: Tu dirección de correo electrónico para Let's Encrypt
 
 3. Guarda el archivo (Ctrl+O, luego Enter, luego Ctrl+X).
@@ -386,7 +364,7 @@ Para actualizar a una nueva versión de n8n:
 - [Documentación de Docker Compose](https://docs.docker.com/compose/)
 - [Documentación de Google Cloud Compute Engine](https://cloud.google.com/compute/docs)
 
-## Para casos extremos: Forzar cierre y eliminación de contenedores e imágenes (Del compose)
+### Para casos extremos: Forzar cierre y eliminación de contenedores e imágenes (Del compose)
 1. Ubicarte en la carpeta donde se encuentra el archivo `docker-compose.yml`
 2. Ejecutar el siguiente comando:
 ```bash
@@ -399,7 +377,7 @@ docker image prune --all --force
 sudo systemctl restart docker
 ```
 
-## Para casos extremos: Forzar cierre y eliminación de contenedores e imágenes (Afecta a todo el servidor)
+### Para casos extremos: Forzar cierre y eliminación de contenedores e imágenes (Afecta a todo el servidor)
 1. Ubicarte en la carpeta donde se encuentra el archivo `docker-compose.yml`
 2. Ejecutar el siguiente comando:
 ```bash
@@ -426,7 +404,7 @@ docker network ls # Solo redes por defecto
 
 4. Reinstalar tu stack
 
-## Versión nuclear para casos demasiado extremos y no recomendado: Eliminar volúmenes (Se eliminará toda la información avanzada en el servidor, por eso, trata de generar backups de manera recurrente)
+### Versión nuclear para casos demasiado extremos y no recomendado: Eliminar volúmenes (Se eliminará toda la información avanzada en el servidor, por eso, trata de generar backups de manera recurrente)
 NO USAR SI YA HAY DATA:
 docker-compose down --rmi all --remove-orphans --volumes && \
 docker system prune --all --force --volumes
