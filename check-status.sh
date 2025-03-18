@@ -106,21 +106,6 @@ else
   fi
 fi
 
-# Verificar puertos
-print_title "VERIFICANDO PUERTOS"
-print_message "Puerto 80 (HTTP):"
-if command -v lsof &> /dev/null; then
-  lsof -i :80 
-else
-  netstat -tulpn | grep ":80 "
-fi
-
-print_message "Puerto 443 (HTTPS):"
-if command -v lsof &> /dev/null; then
-  lsof -i :443
-else
-  netstat -tulpn | grep ":443 "
-fi
 
 # Verificar logs
 print_title "VERIFICANDO LOGS"

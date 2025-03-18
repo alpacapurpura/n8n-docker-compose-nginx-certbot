@@ -28,35 +28,10 @@ print_message "Verificando prerrequisitos..."
 
 # Verificar si Docker está instalado
 if ! command -v docker &> /dev/null; then
-  print_error "Docker no está instalado. ¿Deseas instalarlo ahora? (s/n)"
-  read -r respuesta
-  if [[ "$respuesta" =~ ^[Ss]$ ]]; then
-    print_message "Instalando Docker..."
-    # Actualizar repositorios
-    apt-get update
-    
-    # Instalar paquetes necesarios
-    apt-get install -y apt-transport-https ca-certificates curl software-properties-common gnupg
-    
-    # Añadir clave GPG oficial de Docker
-    install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-    chmod a+r /etc/apt/keyrings/docker.gpg
-    
-    # Configurar repositorio
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-    
-    # Actualizar e instalar Docker
-    apt-get update
-    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    
-    # Verificar instalación
-    systemctl status docker --no-pager
-    print_success "Docker instalado correctamente."
-  else
-    print_error "Docker es necesario para continuar. Instalalo e intenta nuevamente."
-    exit 1
-  fi
+  print_success "Docker está disponible."
+else
+  print_error "Docker no está instalado. Docker es necesario para continuar. Instalalo e intenta nuevamente."
+  exit 1
 fi
 
 # Verificar Docker Compose
@@ -125,34 +100,6 @@ chmod -R 777 n8n/backup
 chmod -R 777 shared
 print_success "Permisos configurados correctamente."
 
-# Verificar puertos 80 y 443
-print_message "Verificando si los puertos 80 y 443 están abiertos..."
-if command -v netstat &> /dev/null; then
-  if netstat -tulpn | grep -q ":80 "; then
-    print_error "El puerto 80 está siendo utilizado por otro servicio. Debes liberarlo antes de continuar."
-    netstat -tulpn | grep ":80 "
-  else
-    print_success "Puerto 80 disponible."
-  fi
-  
-  if netstat -tulpn | grep -q ":443 "; then
-    print_error "El puerto 443 está siendo utilizado por otro servicio. Debes liberarlo antes de continuar."
-    netstat -tulpn | grep ":443 "
-  else
-    print_success "Puerto 443 disponible."
-  fi
-else
-  print_message "No se puede verificar los puertos. Asegúrate de que los puertos 80 y 443 estén disponibles."
-fi
-
-# Abrir puertos en el firewall si está activo
-if command -v ufw &> /dev/null && ufw status | grep -q "active"; then
-  print_message "Abriendo puertos en el firewall UFW..."
-  ufw allow 80/tcp
-  ufw allow 443/tcp
-  print_success "Puertos abiertos en UFW."
-fi
-
 # Iniciar los servicios con Docker Compose usando el perfil CPU
 print_message "Iniciando servicios con Docker Compose (perfil CPU)..."
 docker compose --profile cpu down
@@ -212,30 +159,5 @@ print_message "Configuring secure permissions..."
 find n8n/logs -type d -exec chmod 755 {} \;
 find n8n/logs -type f -exec chmod 644 {} \;
 chown -R 1000:1000 n8n/backup shared
-
-# Add after certbot service verification
-print_message "Configurando renovación automática de certificados..."
-# Create renewal script with VM-compatible paths
-RENEW_SCRIPT="/etc/cron.daily/n8n-certbot-renew"
-echo '#!/bin/sh
-cd "$(dirname "$0")/.."  # Navigate to project root from script location
-docker compose exec certbot certbot renew --quiet
-docker compose exec nginx-proxy nginx -s reload
-' | sudo tee "$RENEW_SCRIPT" > /dev/null
-
-# Set permissions
-sudo chmod +x "$RENEW_SCRIPT"
-print_success "Script de renovación instalado en $RENEW_SCRIPT"
-
-# Verify certbot configuration
-print_message "Verificando configuración de Certbot (dry-run)..."
-docker compose exec certbot certbot renew --dry-run
-if [ $? -eq 0 ]; then
-  print_success "La configuración de renovación automática es válida"
-else
-  print_error "Error en la configuración de Certbot. Verifica los logs:"
-  docker compose logs certbot
-  exit 1
-fi
 
 exit 0
