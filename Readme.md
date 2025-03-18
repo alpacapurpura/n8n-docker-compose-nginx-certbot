@@ -32,7 +32,7 @@ docker compose version
 Si no tienes Docker con el plugin de Compose, puedes instalarlo en
 https://docs.docker.com/compose/install/linux/
 
-```
+
 
 ## Estructura de directorios
 
